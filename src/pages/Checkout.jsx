@@ -57,11 +57,15 @@ export default function Checkout({ user, setBalance }) {
         setIsSubmitting(true)
 
         try {
-            const response = await fetch('https://zojwkdaiezebrpdobhwb.supabase.co/functions/v1/process-checkout', {
+            // جلب المفاتيح من بيئة العمل الآمنة بدلاً من كتابتها مباشرة
+            const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+            const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+            const response = await fetch(`${supabaseUrl}/functions/v1/process-checkout`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpvandrZGFpZXplYnJwZG9iaHdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwMzk4NTIsImV4cCI6MjEwODYxNTg1Mn0.Z9WnGMOmcxQdObdGNvwhBxO3_8-1IQKmzl2Ofn_U_bM`
+                    'Authorization': `Bearer ${supabaseKey}`
                 },
                 body: JSON.stringify({
                     userId: user.id,
