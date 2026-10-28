@@ -7,6 +7,24 @@ const corsHeaders = {
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// دالة إرسال إشعارات التليجرام
+const sendTelegramNotification = async (message: string) => {
+    const token = "8733956083:AAEb10w2s8b41QArcM-95jkJkc-YQIMTd3Y"
+    const chatIds = ["5720331540", "7389134478"]
+
+    for (const chatId of chatIds) {
+        try {
+            await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: 'HTML' })
+            })
+        } catch (e) {
+            console.error("Telegram Error:", e)
+        }
+    }
+}
+
 serve(async (req) => {
     if (req.method === 'OPTIONS') {
         return new Response('ok', { headers: corsHeaders })
@@ -42,7 +60,7 @@ serve(async (req) => {
         const expectedAmount = parseFloat(amount)
 
         // ==========================================
-        //              بوابة BINANCE
+        //             بوابة BINANCE
         // ==========================================
         if (method === 'binance') {
             const apiKey = Deno.env.get('BINANCE_API_KEY')
@@ -98,18 +116,23 @@ serve(async (req) => {
                 const { error: insertError } = await supabase.from('used_txids').insert([{ txid: String(txid).trim() }])
                 if (insertError) throw new Error('خطأ في قاعدة البيانات أثناء تسجيل المعاملة.')
 
-                // تحديث رصيد المستخدم
-                const { data: profile } = await supabase.from('profiles').select('balance').eq('id', userId).single()
+                // تحديث رصيد المستخدم وجلب الإيميل للتليجرام
+                const { data: profile } = await supabase.from('profiles').select('email, balance').eq('id', userId).single()
                 const currentBalance = parseFloat(profile?.balance || "0")
+                const userEmail = profile?.email || userId
                 await supabase.from('profiles').update({ balance: currentBalance + expectedAmount }).eq('id', userId)
 
-                // ==== الإضافة الجديدة: تسجيل الإيداع في سجل لوحة الإدارة ====
+                // تسجيل الإيداع في سجل لوحة الإدارة
                 await supabase.from('transactions').insert([{
                     user_id: userId,
                     type: 'deposit',
                     amount: expectedAmount,
                     title: 'إيداع عبر Binance Pay'
                 }])
+
+                // إرسال الإشعار لـ تليجرام
+                const tgMessage = `✅ <b>إيداع آلي جديد (تم الشحن)</b>\n👤 العميل: <code>${userEmail}</code>\n💰 المبلغ: <b>$${expectedAmount.toFixed(2)}</b>\n🏦 البوابة: Binance\n🧾 العملية: <code>${txid.trim()}</code>`;
+                await sendTelegramNotification(tgMessage);
 
                 return new Response(JSON.stringify({ success: true, message: 'تم التحقق وشحن الرصيد بنجاح عبر بايننس.' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 })
             } else {
@@ -177,18 +200,23 @@ serve(async (req) => {
                 const { error: insertError } = await supabase.from('used_txids').insert([{ txid: String(txid).trim() }])
                 if (insertError) throw new Error('خطأ في قاعدة البيانات أثناء تسجيل المعاملة.')
 
-                // تحديث رصيد المستخدم
-                const { data: profile } = await supabase.from('profiles').select('balance').eq('id', userId).single()
+                // تحديث رصيد المستخدم وجلب الإيميل للتليجرام
+                const { data: profile } = await supabase.from('profiles').select('email, balance').eq('id', userId).single()
                 const currentBalance = parseFloat(profile?.balance || "0")
+                const userEmail = profile?.email || userId
                 await supabase.from('profiles').update({ balance: currentBalance + expectedAmount }).eq('id', userId)
 
-                // ==== الإضافة الجديدة: تسجيل الإيداع في سجل لوحة الإدارة ====
+                // تسجيل الإيداع في سجل لوحة الإدارة
                 await supabase.from('transactions').insert([{
                     user_id: userId,
                     type: 'deposit',
                     amount: expectedAmount,
                     title: 'إيداع عبر Bybit'
                 }])
+
+                // إرسال الإشعار لـ تليجرام
+                const tgMessage = `✅ <b>إيداع آلي جديد (تم الشحن)</b>\n👤 العميل: <code>${userEmail}</code>\n💰 المبلغ: <b>$${expectedAmount.toFixed(2)}</b>\n🏦 البوابة: Bybit\n🧾 العملية: <code>${txid.trim()}</code>`;
+                await sendTelegramNotification(tgMessage);
 
                 return new Response(JSON.stringify({ success: true, message: 'تم التحقق وشحن الرصيد بنجاح عبر بايبت.' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 })
 
