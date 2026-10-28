@@ -1,4 +1,5 @@
 import { createContext, useState, useContext, useEffect } from 'react'
+import { supabase } from '../supabaseClient'
 
 const AppContext = createContext()
 
@@ -27,15 +28,16 @@ export const AppProvider = ({ children }) => {
 
     const [apiProducts, setApiProducts] = useState([])
     const [isLoading, setIsLoading] = useState(true)
+    const [exchangeRate, setExchangeRate] = useState(0)
 
-    // 3. جلب المنتجات 
+    // 3. جلب المنتجات وسعر الصرف
     useEffect(() => {
-        const fetchProducts = async () => {
+        const fetchData = async () => {
             try {
+                // أ. جلب المنتجات
                 const response = await fetch('/api/reseller/products', {
                     method: 'GET',
                     headers: {
-                        // هنا التعديل السحري: الكود سيقرأ المفتاح الجديد من إعدادات Vercel مباشرة
                         'X-API-Key': import.meta.env.VITE_VENDOR_API_KEY,
                         'Content-Type': 'application/json'
                     }
@@ -46,14 +48,27 @@ export const AppProvider = ({ children }) => {
                     const items = Array.isArray(data) ? data : (data.items || data.products || data.data || []);
                     setApiProducts(items);
                 }
+
+                // ب. جلب سعر الصرف من لوحة التحكم (الدفع اليدوي)
+                const { data: rateData, error: rateError } = await supabase
+                    .from('payment_settings')
+                    .select('exchange_rate')
+                    .eq('method_type', 'manual')
+                    .limit(1) // هذا هو التعديل السحري الذي سيحل المشكلة
+                    .maybeSingle();
+
+                if (!rateError && rateData && rateData.exchange_rate) {
+                    setExchangeRate(parseFloat(rateData.exchange_rate));
+                }
+
             } catch (error) {
-                console.error("خطأ في جلب المنتجات:", error);
+                console.error("خطأ في جلب البيانات:", error);
             } finally {
                 setIsLoading(false);
             }
         };
 
-        fetchProducts();
+        fetchData();
     }, [])
 
     const addBalance = (amount) => {
@@ -71,7 +86,7 @@ export const AppProvider = ({ children }) => {
     }
 
     return (
-        <AppContext.Provider value={{ balance, setBalance, orders, addBalance, addOrder, apiProducts, isLoading }}>
+        <AppContext.Provider value={{ balance, setBalance, orders, addBalance, addOrder, apiProducts, isLoading, exchangeRate }}>
             {children}
         </AppContext.Provider>
     )

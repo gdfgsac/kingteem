@@ -19,7 +19,7 @@ export default function ProductDetails() {
     const { id } = useParams()
     const navigate = useNavigate()
     const location = useLocation()
-    const { apiProducts, isLoading } = useAppContext()
+    const { apiProducts, isLoading, exchangeRate } = useAppContext()
 
     const [modalPlan, setModalPlan] = useState(null)
     const [pricingRules, setPricingRules] = useState([])
@@ -145,11 +145,15 @@ export default function ProductDetails() {
                                 </div>
 
                                 <div className="mt-auto pt-4 flex items-center justify-between border-t border-[#f5f7f4]">
-                                    <div>
-                                        {/* السعر النهائي فقط بدون الشطب */}
-                                        <span className="text-xl md:text-2xl font-black text-[#1f7658]" dir="ltr">
+                                    <div className="flex flex-col">
+                                        <span className="text-xl md:text-2xl font-black text-[#1f7658] leading-none" dir="ltr">
                                             ${finalPrice.toFixed(2)}
                                         </span>
+                                        {exchangeRate > 0 && (
+                                            <span className="text-[11px] font-bold text-[#718078] mt-1.5" dir="rtl">
+                                                ≈ {(finalPrice * exchangeRate).toFixed(2)} جنيه
+                                            </span>
+                                        )}
                                     </div>
                                     <button
                                         onClick={(e) => {
@@ -205,12 +209,16 @@ export default function ProductDetails() {
                         </div>
 
                         <div className="flex items-center justify-between border-t border-[#e6ece7] pt-4 shrink-0">
-                            <div>
+                            <div className="flex flex-col">
                                 <p className="text-[10px] text-[#718078] font-bold mb-0.5">السعر</p>
-                                {/* السعر النهائي فقط هنا أيضاً */}
-                                <span className="text-xl md:text-2xl font-black text-[#1f7658]" dir="ltr">
+                                <span className="text-xl md:text-2xl font-black text-[#1f7658] leading-none" dir="ltr">
                                     ${modalPlan.finalPrice.toFixed(2)}
                                 </span>
+                                {exchangeRate > 0 && (
+                                    <span className="text-[11px] font-bold text-[#718078] mt-1.5" dir="rtl">
+                                        ≈ {(modalPlan.finalPrice * exchangeRate).toFixed(2)} جنيه
+                                    </span>
+                                )}
                             </div>
                             <button
                                 onClick={() => {

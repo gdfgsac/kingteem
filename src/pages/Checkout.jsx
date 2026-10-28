@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { ArrowRight, CheckCircle2, Loader2, AlertCircle, ShoppingBag, Copy, Check } from 'lucide-react'
+import { useAppContext } from '../context/AppContext'
 
 // في حال عدم توفر السعر النهائي المرسل، هذه الدالة الاحتياطية تحسب التكلفة الأساسية
 const extractPrice = (plan) => {
@@ -16,6 +17,7 @@ const extractPrice = (plan) => {
 export default function Checkout({ user, setBalance }) {
     const { state } = useLocation()
     const navigate = useNavigate()
+    const { exchangeRate } = useAppContext()
 
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [isSuccess, setIsSuccess] = useState(false)
@@ -167,8 +169,12 @@ export default function Checkout({ user, setBalance }) {
                             <div className="border-t border-[#e6ece7] pt-4">
                                 <div className="flex items-center justify-between">
                                     <span className="text-sm font-bold text-[#718078]">المبلغ المدفوع:</span>
-                                    {/* السعر النهائي بيظهر للعميل */}
-                                    <span className="font-black text-[#172820]" dir="ltr">${Number(planPrice).toFixed(2)}</span>
+                                    <div className="flex flex-col items-end">
+                                        <span className="font-black text-[#172820] leading-none" dir="ltr">${Number(planPrice).toFixed(2)}</span>
+                                        {exchangeRate > 0 && (
+                                            <span className="text-[11px] font-bold text-[#718078] mt-1.5" dir="rtl">≈ {(Number(planPrice) * exchangeRate).toFixed(2)} جنيه</span>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -192,12 +198,18 @@ export default function Checkout({ user, setBalance }) {
                     <>
                         <h1 className="text-xl md:text-2xl font-black text-[#123e30] mb-6 border-b border-[#f5f7f4] pb-4">تأكيد الشراء</h1>
 
-                        <div className="flex items-center gap-4 mb-8 bg-[#f5f7f4] p-4 rounded-2xl border border-[#e6ece7]">
-                            <div className="text-4xl">{parentIcon}</div>
-                            <div className="flex-1">
-                                <h3 className="font-black text-[#172820] text-lg leading-tight mb-1">{planName}</h3>
-                                {/* السعر النهائي بيظهر للعميل في التأكيد */}
-                                <p className="text-[#1f7658] font-black text-xl" dir="ltr">${planPrice.toFixed(2)}</p>
+                        <div className="flex items-center justify-between gap-4 mb-8 bg-[#f5f7f4] p-4 rounded-2xl border border-[#e6ece7]">
+                            <div className="flex items-center gap-4">
+                                <div className="text-4xl">{parentIcon}</div>
+                                <div>
+                                    <h3 className="font-black text-[#172820] text-lg leading-tight mb-1">{planName}</h3>
+                                </div>
+                            </div>
+                            <div className="flex flex-col items-end shrink-0">
+                                <p className="text-[#1f7658] font-black text-xl leading-none" dir="ltr">${planPrice.toFixed(2)}</p>
+                                {exchangeRate > 0 && (
+                                    <p className="text-xs font-bold text-[#718078] mt-1.5" dir="rtl">≈ {(planPrice * exchangeRate).toFixed(2)} جنيه</p>
+                                )}
                             </div>
                         </div>
 
