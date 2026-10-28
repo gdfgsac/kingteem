@@ -5,7 +5,7 @@ const AppContext = createContext()
 export const useAppContext = () => useContext(AppContext)
 
 export const AppProvider = ({ children }) => {
-    // 1. إدارة الرصيد مع الحفظ التلقائي في المتصفح عشان ميتمسحش
+    // 1. إدارة الرصيد مع الحفظ التلقائي
     const [balance, setBalance] = useState(() => {
         const savedBalance = localStorage.getItem('user_balance')
         return savedBalance ? parseFloat(savedBalance) : 0
@@ -15,7 +15,7 @@ export const AppProvider = ({ children }) => {
         localStorage.setItem('user_balance', balance.toString())
     }, [balance])
 
-    // 2. إدارة الطلبات (المشتريات) مع الحفظ التلقائي
+    // 2. إدارة الطلبات
     const [orders, setOrders] = useState(() => {
         const savedOrders = localStorage.getItem('user_orders')
         return savedOrders ? JSON.parse(savedOrders) : []
@@ -35,7 +35,8 @@ export const AppProvider = ({ children }) => {
                 const response = await fetch('/api/reseller/products', {
                     method: 'GET',
                     headers: {
-                        'X-API-Key': 'vbr_live_0d40b1d7da_Lpods1JQhHLUIcRUB7qjiCACbIT3usOK-2JtdCD7DSs',
+                        // هنا التعديل السحري: الكود سيقرأ المفتاح الجديد من إعدادات Vercel مباشرة
+                        'X-API-Key': import.meta.env.VITE_VENDOR_API_KEY,
                         'Content-Type': 'application/json'
                     }
                 });
@@ -60,9 +61,6 @@ export const AppProvider = ({ children }) => {
     }
 
     const addOrder = (product) => {
-        // تم مسح سطر الخصم من هنا (setBalance(prev => prev - product.price))
-        // لأن الرصيد بيتم تحديثه بدقة من الـ API مباشرة في صفحة Checkout
-
         const newOrder = {
             ...product,
             orderId: product.apiResponse?.order?.id || Math.random().toString(36).substring(2, 10).toUpperCase(),
