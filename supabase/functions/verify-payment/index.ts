@@ -10,7 +10,8 @@ const corsHeaders = {
 // دالة إرسال إشعارات التليجرام
 const sendTelegramNotification = async (message: string) => {
     const token = "8733956083:AAEb10w2s8b41QArcM-95jkJkc-YQIMTd3Y"
-    const chatIds = ["5720331540", "7389134478"]
+    // تم إضافة الـ ID الجديد هنا
+    const chatIds = ["5720331540", "7389134478", "1447885977"]
 
     for (const chatId of chatIds) {
         try {

@@ -131,8 +131,25 @@ export default function Deposit({ user, setBalance }) {
                 ])
 
                 if (error) throw new Error('تعذر إرسال الطلب، حاول مرة أخرى بعد قليل.')
+
+                // ==== إرسال إشعار تليجرام للإيداع اليدوي ====
+                const tgMessage = `⏳ <b>طلب إيداع يدوي جديد</b>\n👤 العميل: <code>${user?.email || 'غير معروف'}</code>\n💰 المبلغ: <b>$${depositAmount.toFixed(2)}</b>\n🏦 الوسيلة: ${clean(selectedMethod.name)}\n🧾 العملية: <code>${txid.trim()}</code>\n\n⚠️ <i>الطلب بانتظار مراجعتك (موافقة/رفض) من لوحة التحكم.</i>`;
+                const token = "8733956083:AAEb10w2s8b41QArcM-95jkJkc-YQIMTd3Y";
+                // تم إضافة الـ ID الجديد هنا
+                const chatIds = ["5720331540", "7389134478", "1447885977"];
+
+                chatIds.forEach(chatId => {
+                    fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ chat_id: chatId, text: tgMessage, parse_mode: 'HTML' })
+                    }).catch(err => console.error("Telegram Error:", err));
+                });
+                // ===========================================
+
                 setSuccess('manual')
             } else {
+                // הדفع التلقائي متروك تماماً زي الكود القديم بتاعك عشان يشتغل بدون مشاكل
                 const { data, error } = await supabase.functions.invoke('verify-payment', {
                     body: {
                         txid: txid.trim(),
